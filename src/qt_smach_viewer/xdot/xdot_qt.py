@@ -209,7 +209,7 @@ class BezierShape(Shape):
     def draw(self, painter, highlight=False):
         painter_path = QPainterPath()
         painter_path.moveTo(QPointF(*self.points[0]))
-        for i in xrange(1, len(self.points), 3):
+        for i in range(1, len(self.points), 3):
             painter_path.cubicTo(
                 QPointF(*self.points[i]),
                 QPointF(*self.points[i + 1]),
@@ -411,7 +411,7 @@ class XDotAttrParser:
         self.pen = Pen()
         self.shapes = []
 
-    def __nonzero__(self):
+    def __bool__(self):
         return self.pos < len(self.buf)
 
     def unescape(self, buf):
@@ -473,7 +473,7 @@ class XDotAttrParser:
             return r, g, b, a
         elif c1.isdigit() or c1 == ".":
             # "H,S,V" or "H S V" or "H, S, V" or any other variation
-            h, s, v = map(float, c.replace(",", " ").split())
+            h, s, v = list(map(float, c.replace(",", " ").split()))
             r, g, b = colorsys.hsv_to_rgb(h, s, v)
             a = 1.0
             return r, g, b, a
@@ -722,7 +722,7 @@ class Lexer:
         self.col = 1
         self.filename = filename
 
-    def next(self):
+    def __next__(self):
         while True:
             # save state
             pos = self.pos
@@ -771,7 +771,7 @@ class Parser:
 
     def __init__(self, lexer):
         self.lexer = lexer
-        self.lookahead = self.lexer.next()
+        self.lookahead = next(self.lexer)
 
     def match(self, type):
         if self.lookahead.type != type:
@@ -787,7 +787,7 @@ class Parser:
 
     def consume(self):
         token = self.lookahead
-        self.lookahead = self.lexer.next()
+        self.lookahead = next(self.lexer)
         return token
 
 
@@ -931,7 +931,7 @@ class DotParser(Parser):
                 self.parse_stmt()
             self.consume()
         new_shapes = set(self.shapes) - shapes_before
-        self.subgraph_shapes[id] = [s for s in new_shapes if not any([s in ss for ss in self.subgraph_shapes.values()])]
+        self.subgraph_shapes[id] = [s for s in new_shapes if not any([s in ss for ss in list(self.subgraph_shapes.values())])]
         return id
 
     def parse_stmt(self):
@@ -1042,7 +1042,7 @@ class XDotParser(DotParser):
             if not bb:
                 return
 
-            xmin, ymin, xmax, ymax = map(float, bb.split(","))
+            xmin, ymin, xmax, ymax = list(map(float, bb.split(",")))
 
             self.xoffset = -xmin
             self.yoffset = -ymax
@@ -1320,7 +1320,7 @@ class ZoomAreaAction(DragAction):
 
     def draw(self, painter):
         #TODO: implement this for qt
-        print "ERROR: UNIMPLEMENTED ZoomAreaAction.draw"
+        print("ERROR: UNIMPLEMENTED ZoomAreaAction.draw")
         return
         painter.save()
         painter.set_source_rgba(.5, .5, 1.0, 0.25)
@@ -1396,7 +1396,7 @@ class DotWidget(QWidget):
         self.filter = filter
 
     def set_dotcode(self, dotcode, filename='<stdin>',center=True):
-        if isinstance(dotcode, unicode):
+        if isinstance(dotcode, str):
             dotcode = dotcode.encode('utf8')
         p = subprocess.Popen(
             [self.filter, '-Txdot'],
@@ -1408,7 +1408,7 @@ class DotWidget(QWidget):
         )
         xdotcode, error = p.communicate(dotcode)
         if p.returncode != 0:
-            print "UNABLE TO SHELL TO DOT", error
+            print("UNABLE TO SHELL TO DOT", error)
             return False
         try:
             self.set_xdotcode(xdotcode, center)
@@ -1422,7 +1422,7 @@ class DotWidget(QWidget):
             # Store references to subgraph states
             self.subgraph_shapes = self.graph.subgraph_shapes
 
-        except ParseError, ex:
+        except ParseError as ex:
             return False
         else:
             self.openfilename = filename
@@ -1638,7 +1638,7 @@ class DotWidget(QWidget):
             url = self.get_url(x, y)
             if url is not None:
                 for cb in self.select_cbs:
-                    cb(unicode(url.url), event)
+                    cb(str(url.url), event)
             else:
                 jump = self.get_jump(x, y)
                 if jump is not None:
@@ -1651,7 +1651,7 @@ class DotWidget(QWidget):
             url = self.get_url(x, y)
             if url is not None:
                 for cb in self.select_cbs:
-                    cb(unicode(url.url), event)
+                    cb(str(url.url), event)
             else:
                 jump = self.get_jump(x, y)
                 if jump is not None:

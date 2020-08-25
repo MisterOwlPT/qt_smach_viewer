@@ -54,12 +54,12 @@ from qt_smach_viewer.xdot import xdot_qt
 ### Helper Functions
 def graph_attr_string(attrs):
     """Generate an xdot graph attribute string."""
-    attrs_strs = ['"'+str(k)+'"="'+str(v)+'"' for k,v in attrs.iteritems()]
+    attrs_strs = ['"'+str(k)+'"="'+str(v)+'"' for k,v in attrs.items()]
     return ';\n'.join(attrs_strs)+';\n'
 
 def attr_string(attrs):
     """Generate an xdot node attribute string."""
-    attrs_strs = ['"'+str(k)+'"="'+str(v)+'"' for k,v in attrs.iteritems()]
+    attrs_strs = ['"'+str(k)+'"="'+str(v)+'"' for k,v in attrs.items()]
     return ' ['+(', '.join(attrs_strs))+']'
 
 def get_parent_path(path):
@@ -245,10 +245,10 @@ class ContainerNode():
                     dotstr += '"%s" %s;\n' % (child_path, attr_string(child_attrs))
 
             # Iterate over edges
-            internal_edges = zip(
+            internal_edges = list(zip(
                     self._internal_outcomes,
                     self._outcomes_from,
-                    self._outcomes_to)
+                    self._outcomes_to))
 
             # Add edge from container label to initial state
             internal_edges += [('', '__proxy__', initial_child) for initial_child in self._initial_states]
@@ -598,7 +598,7 @@ class SmachViewerWidget(QWidget):
             if path not in self._containers:
                 if path == '/':
                     if(len(self._top_containers) > 0):
-                        parent_path = self._top_containers.keys()[0]
+                        parent_path = list(self._top_containers.keys())[0]
                     else:
                         parent_path = path
                 else:
@@ -611,7 +611,7 @@ class SmachViewerWidget(QWidget):
                 for row in range(self.ud_tw.rowCount()):
                     self.ud_tw.removeRow(0)
                 # Generate the userdata string
-                for (k, v) in self._user_data.iteritems():
+                for (k, v) in self._user_data.items():
                     self.ud_tw.insertRow(self.ud_tw.rowCount())
                     self.ud_tw.setItem(self.ud_tw.rowCount()-1, 0, QTableWidgetItem(str(k)))
                     self.ud_tw.setItem(self.ud_tw.rowCount()-1, 1, QTableWidgetItem(str(v)))
@@ -634,7 +634,7 @@ class SmachViewerWidget(QWidget):
             parent_path = '/'.join(pathsplit[0:-1])
 
             rospy.logdebug("RECEIVED: "+path)
-            rospy.logdebug("CONTAINERS: "+str(self._containers.keys()))
+            rospy.logdebug("CONTAINERS: "+str(list(self._containers.keys())))
 
             # Initialize redraw flag
             needs_redraw = False
@@ -688,7 +688,7 @@ class SmachViewerWidget(QWidget):
 
         # Get the path to the updating conainer
         # rospy.logdebug("STATUS MSG: "+path)
-        for container in self._containers.values():
+        for container in list(self._containers.values()):
             # Parse Path
             if container.update_status(msg.active_states):
                 with self._update_cond:
@@ -742,7 +742,7 @@ class SmachViewerWidget(QWidget):
                     # Generate the rest of the graph
                     # TODO: Only re-generate dotcode for containers that have changed
 
-                    for path, tc in containers_to_update.iteritems():
+                    for path, tc in containers_to_update.items():
                         dotstr += tc.get_dotcode(
                                 self._selected_paths, [],
                                 0, self._max_depth,
@@ -760,7 +760,7 @@ class SmachViewerWidget(QWidget):
                     self._structure_changed = False
 
                 # Update the styles for the graph if there are any updates
-                for path, tc in containers_to_update.iteritems():
+                for path, tc in containers_to_update.items():
                     tc.set_styles(
                             self._isActive,
                             self._selected_paths,
@@ -790,7 +790,7 @@ class SmachViewerWidget(QWidget):
                 self._update_cond.wait()
                 self.tree.DeleteAllItems()
                 self._tree_nodes = {}
-                for path, tc in self._top_containers.iteritems():
+                for path, tc in self._top_containers.items():
                     self.add_to_tree(path, None)
 
     def add_to_tree(self, path, parent):
@@ -803,7 +803,7 @@ class SmachViewerWidget(QWidget):
         # Add children to tree
         for label in self._containers[path]._children:
             child_path = '/'.join([path, label])
-            if child_path in self._containers.keys():
+            if child_path in list(self._containers.keys()):
                 self.add_to_tree(child_path, container)
             else:
                 self.tree.AppendItem(container, label)
@@ -821,7 +821,7 @@ class SmachViewerWidget(QWidget):
         if not os.path.exists(directory):
                 os.makedirs(directory)
         filename = directory+timestr+'.dot'
-        print('Writing to file: %s' % filename)
+        print(('Writing to file: %s' % filename))
         with open(filename, 'w') as f:
             f.write(self.dotstr)
 

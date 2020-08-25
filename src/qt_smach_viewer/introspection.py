@@ -64,7 +64,7 @@ class PublishStatus(threading.Thread):
         # pickle possible userdata
         # TODO optimisation
         copy_dict = {}
-        for data, value in self.server.userdata._data.iteritems():
+        for data, value in self.server.userdata._data.items():
             try:
                 pickle.dumps(value, 2)
                 copy_dict[data] = value
@@ -154,7 +154,7 @@ class IntrospectionServer():
         proxy = ContainerProxy(state, path, self.userdata, self.update_lock)
         self._structure.containers.append(self._construct_structure(state, path))
         # Get a list of children that are also containers
-        for (label, child) in state.get_children().iteritems():
+        for (label, child) in state.get_children().items():
             # If this is also a container, recurse into it
             if isinstance(child, smach.container.Container):
                 self.construct(child, path+'/'+label)
